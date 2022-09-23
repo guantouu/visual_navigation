@@ -4,12 +4,14 @@ import numpy as np
 import cv2
 
 from ai2thor.controller import Controller
+from constants import SCREEN_HEIGHT
+from constants import SCREEN_WIDTH
 from utils.tools import SimpleImageViewer
 
 GRID_SIZE = 0.25
 
 def key_press(key, mod):
-    global human_agent_action, human_wants_restart, stop_requested, take_picture, invert_view
+    global human_agent_action, human_wants_restart, stop_requested, take_picture, invert_view, label_text
 
     if key == ord('R') or key == ord('r'):
         human_wants_restart = True
@@ -39,8 +41,20 @@ def key_press(key, mod):
     if key == 105:
         invert_view = not invert_view
 
+def mouse_press(X, Y, button, modifiers):
+    global label_text
+    query = controller.step(
+        action="GetObjectInFrame",
+        x=float(X / SCREEN_WIDTH),
+        y=float((SCREEN_HEIGHT - Y) / SCREEN_HEIGHT)
+    )
+    object_id = query.metadata["actionReturn"]
+    # label_text = "X: {}, Y:{}".format(float(X / SCREEN_WIDTH), float((SCREEN_HEIGHT - Y) / SCREEN_HEIGHT))
+    label_text = object_id
+    
+
 def rollout(event, controller, viewer, scene_name):
-    global human_agent_action, human_wants_restart, stop_requested, take_picture, invert_view
+    global human_agent_action, human_wants_restart, stop_requested, take_picture, invert_view, label_text
 
     human_agent_action = None
     human_wants_restart = False
@@ -49,7 +63,6 @@ def rollout(event, controller, viewer, scene_name):
     invert_view = False
 
     while True:
-        time.sleep(1)
         if human_agent_action is not None:
             event = controller.step(action=human_agent_action)
             human_agent_action = None
@@ -65,7 +78,7 @@ def rollout(event, controller, viewer, scene_name):
         if stop_requested: break
         
         if take_picture:
-            current_image = event.frame
+            current_image = event.cv2img
             cv2.imwrite("data/{}_goal.png".format(scene_name), current_image)
             json_dict = {}
             agent_position = event.metadata["agent"]["position"]
@@ -83,9 +96,9 @@ def rollout(event, controller, viewer, scene_name):
             depth_image = event.depth_frame
             depth_image /= np.max(depth_image)
             depth_image *= 255
-            viewer.imshow(depth_image.astype("uint8"))
+            viewer.imshow(depth_image.astype("uint8"), label_text)
         else:
-            viewer.imshow(event.frame)
+            viewer.imshow(event.frame, label_text)
 
 if __name__ == '__main__':
     scene_name = 'FloorPlan212'
@@ -93,8 +106,8 @@ if __name__ == '__main__':
     controller = Controller(
         scene=scene_name,
         gridSize=0.25,
-        width=1000,
-        height=1000,
+        width=SCREEN_HEIGHT,
+        height=SCREEN_WIDTH,
         grid_size=GRID_SIZE,
         renderDepthImage=True
     )
@@ -105,10 +118,12 @@ if __name__ == '__main__':
     stop_requested = False
     take_picture = False
     invert_view = False
+    label_text = ""
 
     viewer = SimpleImageViewer()
-    viewer.imshow(event.frame)
+    viewer.imshow(event.frame, label_text)
     viewer.window.on_key_press = key_press
+    viewer.window.on_mouse_press = mouse_press
 
     print("Use WASD keys to move the agent.")
     print("Use QE keys to move the camera.")
@@ -116,6 +131,7 @@ if __name__ == '__main__':
     print("Press P to save an image of the current view.")
     print("Press R to reset agent\'s location.")
     print("Press F to quit.")
+
 
     rollout(event, controller, viewer, scene_name)
 
