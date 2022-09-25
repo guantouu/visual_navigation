@@ -54,7 +54,7 @@ def mouse_press(X, Y, button, modifiers):
     
 
 def rollout(event, controller, viewer, scene_name):
-    global human_agent_action, human_wants_restart, stop_requested, take_picture, invert_view, label_text
+    global human_agent_action, human_wants_restart, stop_requested, take_picture, invert_view, label_text, pic_num
 
     human_agent_action = None
     human_wants_restart = False
@@ -79,16 +79,17 @@ def rollout(event, controller, viewer, scene_name):
         
         if take_picture:
             current_image = event.cv2img
-            cv2.imwrite("data/{}_goal.png".format(scene_name), current_image)
-            json_dict = {}
-            agent_position = event.metadata["agent"]["position"]
-            agent_rotation = event.metadata["agent"]["rotation"]
-            json_dict["grid_size"] = GRID_SIZE
-            json_dict["agent_position"] = agent_position
-            json_dict["agent_rotation"] = agent_rotation
+            cv2.imwrite("/home/brianchen/Documents/visual_navigation/data/image/_{}.png".format(pic_num), current_image)
+            # json_dict = {}
+            # agent_position = event.metadata["agent"]["position"]
+            # agent_rotation = event.metadata["agent"]["rotation"]
+            # json_dict["grid_size"] = GRID_SIZE
+            # json_dict["agent_position"] = agent_position
+            # json_dict["agent_rotation"] = agent_rotation
 
-            with open('data/{}_goal.json'.format(scene_name), "w") as outfile:
-                json.dump(json_dict, outfile)
+            # with open('data/{}_goal.json'.format(scene_name), "w") as outfile:
+            #     json.dump(json_dict, outfile)
+            pic_num += 1
 
             take_picture = False
 
@@ -119,6 +120,7 @@ if __name__ == '__main__':
     take_picture = False
     invert_view = False
     label_text = ""
+    pic_num = 0
 
     viewer = SimpleImageViewer()
     viewer.imshow(event.frame, label_text)
