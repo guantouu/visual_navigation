@@ -1,0 +1,5 @@
+data/*
+utils/__pycache__
+ResNet/__pycache__
+__pycache__/
+*.csv
