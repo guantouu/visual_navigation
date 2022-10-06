@@ -1,6 +1,7 @@
 import time
 import json
 import numpy as np
+import re
 import cv2
 
 from ai2thor.controller import Controller
@@ -9,6 +10,7 @@ from constants import SCREEN_WIDTH
 from utils.tools import SimpleImageViewer
 
 GRID_SIZE = 0.25
+VISIBILITYDISTANCE = 0.5
 
 def key_press(key, mod):
     global human_agent_action, human_wants_restart, stop_requested, take_picture, invert_view, label_text
@@ -61,34 +63,37 @@ def rollout(event, controller, viewer, scene_name):
     stop_requested = False
     take_picture = False
     invert_view = False
+    regex  = re.compile(r'is blocking Agent')
 
     while True:
         if human_agent_action is not None:
             event = controller.step(action=human_agent_action)
+            if regex.search(event.metadata['errorMessage']):
+                print('blocking')
+            for i in event.metadata["objects"]:
+                if i['objectId'] == 'Laptop|+01.80|+00.47|+00.50':
+                    print("visible is {}".format(i['visible'] if 'True' else 'False'))
             human_agent_action = None
         
         if human_wants_restart:
             controller.reset(scene=scene_name)
             human_wants_restart = False
-        
-        if event.metadata['collided']:
-            print('Collision occurs.')
-            event.collided = False
 
         if stop_requested: break
         
         if take_picture:
             current_image = event.cv2img
             cv2.imwrite("/home/brianchen/Documents/visual_navigation/data/image/_{}.png".format(pic_num), current_image)
-            # json_dict = {}
-            # agent_position = event.metadata["agent"]["position"]
-            # agent_rotation = event.metadata["agent"]["rotation"]
-            # json_dict["grid_size"] = GRID_SIZE
-            # json_dict["agent_position"] = agent_position
-            # json_dict["agent_rotation"] = agent_rotation
+            json_dict = {}
+            agent_position = event.metadata["agent"]["position"]
+            agent_rotation = event.metadata["agent"]["rotation"]
+            json_dict["grid_size"] = GRID_SIZE
+            json_dict["agent_position"] = agent_position
+            json_dict["agent_rotation"] = agent_rotation
+            json_dict["object_id"] = label_text
 
-            # with open('data/{}_goal.json'.format(scene_name), "w") as outfile:
-            #     json.dump(json_dict, outfile)
+            with open('data/{}_goal.json'.format(scene_name), "w") as outfile:
+                json.dump(json_dict, outfile)
             pic_num += 1
 
             take_picture = False
@@ -110,7 +115,8 @@ if __name__ == '__main__':
         width=SCREEN_HEIGHT,
         height=SCREEN_WIDTH,
         grid_size=GRID_SIZE,
-        renderDepthImage=True
+        renderDepthImage=True,
+        visibilityDistance=VISIBILITYDISTANCE
     )
     event = controller.step(action='Done')
 

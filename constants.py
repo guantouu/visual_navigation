@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+RESNET50_MODEL_PATH = '/home/brianchen/Documents/visual_navigation/data/resnet50_1664008061.pt'
+
 LOCAL_T_MAX = 5 # repeat step size
 RMSP_ALPHA = 0.99 # decay parameter for RMSProp
 RMSP_EPSILON = 0.1 # epsilon parameter for RMSProp
@@ -23,17 +25,14 @@ SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 1000
 HISTORY_LENGTH = 4
 
+VISIBILITYDISTANCE = 0.5
+
 NUM_EVAL_EPISODES = 5 # number of episodes for evaluation
 
 TASK_TYPE = 'navigation' # no need to change
+
 # keys are scene names, and values are a list of location ids (navigation targets)
-# TASK_LIST = {
-#   'bathroom_02'    : ['26', '37', '43', '53', '69'],
-#   'bedroom_04'     : ['134', '264', '320', '384', '387'],
-#   'kitchen_02'     : ['90', '136', '157', '207', '329'],
-#   'living_room_08' : ['92', '135', '193', '228', '254']
-# }
 TASK_LIST = {
-  'bathroom_02' : ['30']
+  'FloorPlan212'    : ['Laptop|+01.80|+00.47|+00.50'],
 }
 
